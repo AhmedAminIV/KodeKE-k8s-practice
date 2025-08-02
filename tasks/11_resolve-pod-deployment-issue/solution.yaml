@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webserver
+spec:
+  containers:
+    - name: httpd-container
+      image: httpd:latest
+    - name: sidecar-container
+      image: ubuntu:latest
+      command: [ "sleep", "3600" ]
