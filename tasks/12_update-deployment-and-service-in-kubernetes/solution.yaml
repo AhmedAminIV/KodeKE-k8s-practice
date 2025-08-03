@@ -1,0 +1,15 @@
+# Export current deployment and service YAML
+kubectl get deployment nginx-deployment -o yaml > deployment.yaml
+kubectl get service nginx-service -o yaml > service.yaml
+  
+  # Edit the files:
+  # - In deployment.yaml:
+  #   - Set `replicas: 5`
+  #   - Under `spec.template.spec.containers[0].image`, change to `nginx:latest`
+  
+  # - In service.yaml:
+  #   - Under `spec.ports[0].nodePort`, set `32165`
+  
+  # Apply the changes
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
