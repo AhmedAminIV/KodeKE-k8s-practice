@@ -1,4 +1,4 @@
-# 🚨 Kubernetes Troubleshooting Task: Nginx & PHP-FPM Setup Issue
+# Kubernetes Troubleshooting Task: Nginx & PHP-FPM Setup Issue
 
 ## 🧩 Task Description
 
