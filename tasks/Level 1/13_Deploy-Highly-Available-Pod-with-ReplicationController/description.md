@@ -27,7 +27,7 @@ and maintain their availability as specified.
 
 ---
 
-## ✅ Success Criteria
+## ☑ Success Criteria
 
 - A ReplicationController named `nginx-replicationcontroller` is created successfully.
 - Exactly **3 pods** are running and managed by the controller.
