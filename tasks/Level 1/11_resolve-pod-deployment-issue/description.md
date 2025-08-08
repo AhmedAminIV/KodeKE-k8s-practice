@@ -32,6 +32,6 @@ kubectl get pod webserver -o yaml > pod.yaml
     - ImagePull errors.
     - Misconfigured spec.
 
-> ✅ Ensure both containers are healthy and the pod is in `Running` state before clicking **Finish**.
+> ☑ Ensure both containers are healthy and the pod is in `Running` state before clicking **Finish**.
 
 ---
