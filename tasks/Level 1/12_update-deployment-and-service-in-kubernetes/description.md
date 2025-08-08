@@ -20,7 +20,7 @@ The Nautilus application development team has introduced new features that requi
 
 > ⚠️ You are **not allowed to delete** the existing deployment or service. Updates must be done via `kubectl` or configuration editing.
 
-## 💡 Hints
+## Hints
 
 - You can use `kubectl patch`, `kubectl scale`, or `kubectl set image` for direct updates.
 - Alternatively, export the current YAML configuration, edit the required fields, and re-apply it using `kubectl apply`.
