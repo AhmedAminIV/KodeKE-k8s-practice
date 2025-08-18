@@ -1,0 +1,1 @@
+# Description for 06_Environment_Variables_in_Kubernetes
