@@ -1,1 +1,139 @@
 # YAML Solution for 02_Deploy_Lamp_Stack_on_Kubernetes_Cluster
+# Config map
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: php-config
+data:
+  php.ini: |
+    variables_order: "EGPCS"
+
+---
+# Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+type: Opaque # Or a specific type like kubernetes.io/basic-auth, kubernetes.io/tls, etc.
+data:
+  # Base64 encoded values for sensitive data
+  MYSQL_ROOT_PASSWORD: cm9vdHBhc3M=
+  MYSQL_DATABASE: bXlkYg==
+  MYSQL_USER: bXl1c2Vy
+  MYSQL_PASSWORD: bXlwYXNzd29yZA==
+  MYSQL_HOST: bXlzcWwtc2VydmljZQ==
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lamp-wp
+spec:
+  replicas: 1 # Desired number of identical pods
+  selector:
+    matchLabels:
+      app: lamp
+  template:
+    metadata:
+      labels:
+        app: lamp
+    spec:
+      containers:
+        - name: httpd-php-container
+          image: webdevops/php-apache:alpine-3-php7
+          volumeMounts:
+            - name: php-config-volume
+              mountPath: /opt/docker/etc/php/php.ini
+              subPath: php.ini
+          ports:
+            - containerPort: 80
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_DATABASE
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_PASSWORD
+            - name: MYSQL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_HOST
+        - name: mysql-container
+          image: mysql:5.6
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_DATABASE
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_PASSWORD
+      volumes:
+        - name: php-config-volume
+          configMap:
+            name: php-config
+
+---
+# Web app service
+apiVersion: v1
+kind: Service
+metadata:
+  name: lamp-service
+spec:
+  selector:
+    app: lamp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30008
+  type: NodePort
+
+---
+# MySql Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+spec:
+  selector:
+    app: lamp
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+  type: ClusterIP
+
+  # kubectl cp /tmp/index.php <pod_name>:/app -c httpd-php-container
+  # kubectl exec -it lamp-wp-84fc859b8b-wlhnd -c httpd-php-container -- /bin/bash
+  # change index.php values using getenv("ENV_VAR") to match yours
