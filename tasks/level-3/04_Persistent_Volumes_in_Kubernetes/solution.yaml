@@ -1,1 +1,66 @@
-# YAML Solution for 04_Persistent_Volumes_in_Kubernetes
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-devops
+spec:
+  storageClassName: manual # Optional: Reference a specific StorageClass
+  capacity:
+    storage: 3Gi  # Defines the storage capacity of the PV
+  accessModes:
+    - ReadWriteOnce # Specifies how the volume can be mounted (e.g., ReadWriteOnce, ReadOnlyMany, ReadWriteMany)
+  persistentVolumeReclaimPolicy: Retain # Determines what happens to the volume after the PVC is deleted (e.g., Retain, Recycle, Delete)
+  hostPath: # Specifies the type of volume; hostPath is for local storage on the node
+    path: "/mnt/devops" # The path on the host node where the volume data will be stored# YAML Solution for 04_Persistent_Volumes_in_Kubernetes
+
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-devops
+spec:
+  accessModes:
+    - ReadWriteOnce # Or ReadWriteMany, ReadOnlyMany
+  resources:
+    requests:
+      storage: 3Gi # Requesting 5 Gigabytes of storage
+  storageClassName: manual # Optional: Reference a specific StorageClass
+
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-devops
+  labels:
+    app: devops-app
+spec:
+  containers:
+    - name: container-devops
+      image: httpd:latest
+      ports:
+        - containerPort: 80
+      volumeMounts:
+        - name: devops-storage
+          mountPath: /usr/local/apache2/htdocs
+  volumes:
+    - name: devops-storage
+      persistentVolumeClaim:
+        claimName: pvc-devops
+
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-devops
+spec:
+  selector:
+    app: devops-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30008
+  type: NodePort
