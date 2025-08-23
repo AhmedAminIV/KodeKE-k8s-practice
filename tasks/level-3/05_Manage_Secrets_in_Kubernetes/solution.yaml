@@ -1,1 +1,30 @@
-# YAML Solution for 05_Manage_Secrets_in_Kubernetes
+#apiVersion: v1
+#kind: Secret
+#metadata:
+#  name: official
+#type: Opaque
+#data:
+  # If using CLI, just run:
+   kubectl create secret generic official --from-file=/opt/official.txt
+#  official.txt: NWVjdXIzCg==
+
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secret-datacenter
+  labels:
+    app: nginx
+spec:
+  containers:
+    - name: secret-container-datacenter
+      image: ubuntu:latest
+      command: ["sleep", "3600"]
+      volumeMounts:
+        - name: secret-volume
+          mountPath: /opt/games
+  volumes:
+    - name: secret-volume
+      secret:
+        secretName: official
