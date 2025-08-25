@@ -1,1 +1,164 @@
-# YAML Solution for 07_Kubernetes_LEMP_Setup
+"""
+kubectl create secret generic mysql-root-pass \
+  --from-literal=password=R00t
+  
+kubectl create secret generic mysql-user-pass \
+  --from-literal=username=kodekloud_aim \
+  --from-literal=password=ksH85UJjhb
+  
+kubectl create secret generic mysql-db-url \
+  --from-literal=database=kodekloud_db4
+  
+kubectl create secret generic mysql-host \
+  --from-literal=host=mysql-service
+"""
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: php-config
+data:
+  php.ini: |
+    variables_order = "EGPCS"
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lemp-wp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lemp
+  template:
+    metadata:
+      labels:
+        app: lemp
+    spec:
+      containers:
+        - name: nginx-php-container
+          image: webdevops/php-nginx:alpine-3-php7
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: php-config
+              mountPath: /opt/docker/etc/php/php.ini
+              subPath: php.ini
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-root-pass
+                  key: password
+            - name: MYSQL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-host
+                  key: host
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-db-url
+                  key: database
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-user-pass
+                  key: username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-user-pass
+                  key: password
+
+        - name: mysql-container
+          image: mysql:5.6
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-root-pass
+                  key: password
+            - name: MYSQL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-host
+                  key: host
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-db-url
+                  key: database
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-user-pass
+                  key: username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-user-pass
+                  key: password
+          ports:
+            - containerPort: 3306
+
+      volumes:
+        - name: php-config
+          configMap:
+            name: php-config
+            items:
+              - key: php.ini
+                path: php.ini
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lemp-service
+spec:
+  selector:
+    app: lemp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30008
+  type: NodePort
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+spec:
+  selector:
+    app: lemp
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+
+---
+
+#copy index.php in the current directory and edit it to use ENV.
+
+
+"""
+  $dbname = getenv('MYSQL_DATABASE');
+  $dbuser = getenv('MYSQL_USER');
+  $dbpass = getenv('MYSQL_PASSWORD');
+  $dbhost = getenv('MYSQL_HOST');
+  
+"""
+
+"""  
+  for pod in $(kubectl get pods -l app=lemp -o jsonpath='{.items[*].metadata.name}'); do
+    kubectl cp index.php $pod:/app -c nginx-php-container
+    done
+
+"""
+# kubectl exec -it $(kubectl get pod -l app=lemp -o jsonpath='{.items[0].metadata.name}') -c nginx-php-container -- /bin/bash
