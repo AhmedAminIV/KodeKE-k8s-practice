@@ -1,0 +1,132 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: r-master
+  template:
+    metadata:
+      labels:
+        app: r-master
+    spec:
+      containers:
+        - name: master-redis-devops
+          image: redis
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "100m"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-master
+  labels:
+    app: r-master
+spec:
+  selector:
+    app: r-master
+  ports:
+    - protocol: TCP
+      port: 6379      # Service port
+      targetPort: 6379 # Pod's container port
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-slave
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: r-slave
+  template:
+    metadata:
+      labels:
+        app: r-slave
+    spec:
+      containers:
+        - name: slave-redis-devops
+          image: gcr.io/google_samples/gb-redisslave:v3
+          ports:
+            - containerPort: 6379
+          env:
+            - name: GET_HOSTS_FROM
+              value: "dns"
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "100m"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-slave
+  labels:
+    app: r-slave
+spec:
+  selector:
+    app: r-slave
+  ports:
+    - protocol: TCP
+      port: 6379      # Service port
+      targetPort: 6379 # Pod's container port
+
+---
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: php-redis-devops
+          image: gcr.io/google-samples/gb-frontend@sha256:a908df8486ff66f2c4daa0d3d8a2fa09846a1fc8efd65649c0109695c7c5cbff
+          ports:
+            - containerPort: 80
+          env:
+            - name: GET_HOSTS_FROM
+              value: "dns"
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "100m"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+spec:
+  selector:
+    app: frontend
+  ports:
+    - protocol: TCP
+      port: 80     # Service port
+      targetPort: 80 # Pod's container port
+      nodePort: 30009
+  type: NodePort
